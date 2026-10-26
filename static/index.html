@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>Northstar — AI Serving Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="Northstar home">
+        <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5 19 13l9.5 3-9.5 3-3 9.5L13 19l-9.5-3 9.5-3L16 3.5Z"/><circle cx="16" cy="16" r="2.1"/></svg></span>
+        <span class="brand-copy"><strong>northstar</strong><small>MODEL OPERATIONS</small></span>
+      </a>
+      <div class="workspace-select"><span class="workspace-avatar">A</span><span><strong>Acme AI</strong><small>Production workspace</small></span><svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg></div>
+      <nav class="primary-nav" aria-label="Primary navigation">
+        <span class="nav-caption">PLATFORM</span>
+        <button class="nav-link active" data-page="overview"><span class="nav-icon" data-icon="overview"></span>Overview</button>
+        <button class="nav-link" data-page="deployments"><span class="nav-icon" data-icon="deployments"></span>Deployments<span class="nav-count" id="deploy-count">1</span></button>
+        <button class="nav-link" data-page="models"><span class="nav-icon" data-icon="models"></span>Models</button>
+        <span class="nav-caption nav-caption-gap">WORKLOADS</span>
+        <button class="nav-link" data-page="requests"><span class="nav-icon" data-icon="requests"></span>Requests<span class="nav-count" id="queue-count">0</span></button>
+        <button class="nav-link" data-page="workflows"><span class="nav-icon" data-icon="workflows"></span>Workflow runs</button>
+        <span class="nav-caption nav-caption-gap">GOVERNANCE</span>
+        <button class="nav-link" data-page="approvals"><span class="nav-icon" data-icon="approvals"></span>Approvals<span class="nav-count attention" id="approval-count">0</span></button>
+        <button class="nav-link" data-page="health"><span class="nav-icon" data-icon="health"></span>System health</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-callout"><span class="callout-orb"></span><div><strong>Control plane ready</strong><small id="sidebar-runtime">Checking runtime…</small></div><span class="tiny-arrow">↗</span></div>
+        <button class="profile-button"><span class="profile-avatar">SD</span><span><strong>Shawdaimarie</strong><small>Platform engineer</small></span><svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg></button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Workspace</span><i>/</i><strong id="crumb-current">Overview</strong></div>
+        <div class="top-actions">
+          <div class="region-chip"><span class="region-dot"></span>single process <span class="mono">loopback</span></div>
+          <button class="icon-button" aria-label="Keyboard shortcuts"><span>⌘</span><span>K</span></button>
+          <span class="top-divider"></span>
+          <button class="help-button"><span class="help-mark">?</span>Help</button>
+        </div>
+      </header>
+      <div class="content-wrap">
+        <div class="page-heading">
+          <div><div class="eyebrow" id="page-eyebrow">OPERATIONS / LIVE</div><h1 id="page-title">Control plane</h1><p id="page-description">A clear view of your models, workloads, and the systems behind them.</p></div>
+          <div class="heading-actions" id="heading-actions"></div>
+        </div>
+        <div id="page-content" aria-live="polite"></div>
+      </div>
+      <footer class="app-footer"><span>Northstar <b>·</b> Serving platform</span><span><span class="footer-live"></span>Live data <b>·</b> refreshed every 3 seconds</span></footer>
+    </main>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
