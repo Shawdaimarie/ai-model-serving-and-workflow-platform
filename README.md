@@ -15,9 +15,10 @@ A small, runnable reference implementation for model serving operations and dura
 Requires Python 3.10 or newer. The service uses only the Python standard library.
 
 ```bash
-cd outputs/ai-serving-platform
 python3 server.py
 ```
+
+Run the command from the project directory.
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The default `demo` backend emits a clearly identified deterministic response so the console can be explored without model weights. It does not run a language model and does not report token usage.
 
