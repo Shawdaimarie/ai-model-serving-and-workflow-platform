@@ -11,13 +11,14 @@
   <link href="/static/styles.css" rel="stylesheet">
 </head>
 <body>
+<div style="padding:10px"><label for="operator-token">Operator access token (when configured)</label> <input id="operator-token" type="password" autocomplete="off"><button id="operator-connect">Connect</button></div>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="#overview" aria-label="Northstar home">
+      <a class="brand" href="#overview">
         <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5 19 13l9.5 3-9.5 3-3 9.5L13 19l-9.5-3 9.5-3L16 3.5Z"/><circle cx="16" cy="16" r="2.1"/></svg></span>
-        <span class="brand-copy"><strong>northstar</strong><small>MODEL OPERATIONS</small></span>
+        <span class="brand-copy"><strong id="brand-name">northstar</strong><small id="brand-description">MODEL OPERATIONS</small></span>
       </a>
-      <div class="workspace-select"><span class="workspace-avatar">A</span><span><strong>Acme AI</strong><small>Production workspace</small></span><svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg></div>
+      <div class="workspace-select"><span class="workspace-avatar">A</span><span><strong>Acme AI</strong><small>Local reference workspace</small></span><svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg></div>
       <nav class="primary-nav" aria-label="Primary navigation">
         <span class="nav-caption">PLATFORM</span>
         <button class="nav-link active" data-page="overview"><span class="nav-icon" data-icon="overview"></span>Overview</button>
@@ -41,7 +42,7 @@
         <div class="breadcrumbs"><span>Workspace</span><i>/</i><strong id="crumb-current">Overview</strong></div>
         <div class="top-actions">
           <div class="region-chip"><span class="region-dot"></span>single process <span class="mono">loopback</span></div>
-          <button class="icon-button" aria-label="Keyboard shortcuts"><span>⌘</span><span>K</span></button>
+          <button class="icon-button" aria-label="⌘ K — Keyboard shortcuts"><span>⌘</span><span>K</span></button>
           <span class="top-divider"></span>
           <button class="help-button"><span class="help-mark">?</span>Help</button>
         </div>

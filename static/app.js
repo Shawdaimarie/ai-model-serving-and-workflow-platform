@@ -52,7 +52,7 @@ function statusPill(status) {
   return `<span class="status-pill ${esc(status)}">${esc(label)}</span>`;
 }
 async function api(path, options = {}) {
-  const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + document.getElementById('operator-token').value, ...options.headers } });
   let data = {};
   try { data = await response.json(); } catch (_) { data = {}; }
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
@@ -125,7 +125,7 @@ function requestRows(rows, limit = 5) {
   return data.map(r => `<tr data-click="request" data-id="${esc(r.id)}"><td class="id-cell">${esc(r.id.slice(0, 8))}…</td><td><span class="model-cell"><span class="mini-model">AI</span>${esc(r.model)}</span></td><td>${statusPill(r.status)}</td><td>${r.tokens == null ? '—' : fmtNum(r.tokens)}</td><td>${fmtNum(r.queueMs, 1)} ms</td><td>${esc(ago(r.createdAt))}</td></tr>`).join('');
 }
 function requestsTable(rows, limit = 5) {
-  return `<div class="table-scroll"><table><thead><tr><th>REQUEST ID</th><th>MODEL</th><th>STATUS</th><th>TOKENS</th><th>QUEUE</th><th>AGE</th></tr></thead><tbody>${requestRows(rows, limit)}</tbody></table></div>`;
+  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Results table"><table><thead><tr><th>REQUEST ID</th><th>MODEL</th><th>STATUS</th><th>TOKENS</th><th>QUEUE</th><th>AGE</th></tr></thead><tbody>${requestRows(rows, limit)}</tbody></table></div>`;
 }
 function renderOverview() {
   const o = state.overview || {}, h = state.health || {}, counts = o.requests || {};
@@ -166,7 +166,7 @@ function renderEventList(events) {
 }
 function renderDeployments() {
   const rows = state.deployments;
-  return `<div class="page-grid"><section class="card table-card"><div class="table-toolbar"><div><h2>Model endpoints</h2><span class="table-meta">${rows.length} deployment</span></div><button class="link-button" data-action="go-models">Runtime settings →</button></div><div class="table-scroll"><table><thead><tr><th>DEPLOYMENT</th><th>MODEL REVISION</th><th>BACKEND</th><th>STATUS</th><th>CAPACITY</th><th>ENDPOINT</th></tr></thead><tbody>${rows.length ? rows.map(d => `<tr><td><span class="deployment-cell"><span class="deployment-logo">AI</span><span><strong>${esc(d.name)}</strong><small>${esc(d.id)}</small></span></span></td><td><span class="detail-value">${esc(d.model)}@${esc(d.revision)}</span></td><td><span class="detail-value">${esc(d.backend)}</span></td><td>${statusPill(d.status)}</td><td><span class="detail-value">${fmtNum(d.activeLimit)} slots · ${fmtNum(d.queueLimit)} queue</span></td><td><code class="id-cell">${esc(d.endpoint)}</code></td></tr>`).join('') : `<tr><td colspan="6" class="empty-row">No deployments configured.</td></tr>`}</tbody></table></div></section>
+  return `<div class="page-grid"><section class="card table-card"><div class="table-toolbar"><div><h2>Model endpoints</h2><span class="table-meta">${rows.length} deployment</span></div><button class="link-button" data-action="go-models">Runtime settings →</button></div><div class="table-scroll" tabindex="0" role="region" aria-label="Results table"><table><thead><tr><th>DEPLOYMENT</th><th>MODEL REVISION</th><th>BACKEND</th><th>STATUS</th><th>CAPACITY</th><th>ENDPOINT</th></tr></thead><tbody>${rows.length ? rows.map(d => `<tr><td><span class="deployment-cell"><span class="deployment-logo">AI</span><span><strong>${esc(d.name)}</strong><small>${esc(d.id)}</small></span></span></td><td><span class="detail-value">${esc(d.model)}@${esc(d.revision)}</span></td><td><span class="detail-value">${esc(d.backend)}</span></td><td>${statusPill(d.status)}</td><td><span class="detail-value">${fmtNum(d.activeLimit)} slots · ${fmtNum(d.queueLimit)} queue</span></td><td><code class="id-cell">${esc(d.endpoint)}</code></td></tr>`).join('') : `<tr><td colspan="6" class="empty-row">No deployments configured.</td></tr>`}</tbody></table></div></section>
     <aside class="card side-card"><h3>Deployment controls</h3><p>The first cut exposes one pinned model deployment and a bounded request queue. Advanced device and quantization values remain owned by the runtime serving API.</p><div style="margin-top:14px"><div class="side-kv"><span>Concurrency limit</span><strong>${fmtNum(state.overview?.activeLimit)}</strong></div><div class="side-kv"><span>Request queue cap</span><strong>${fmtNum(state.overview?.queueLimit)}</strong></div><div class="side-kv"><span>Tenant quota</span><strong>${fmtNum(state.overview?.activeLimit ? Math.min(4, state.overview.activeLimit) : 4)} active</strong></div><div class="side-kv"><span>Configuration</span><strong>version pinned</strong></div></div></aside></div>`;
 }
 function renderModels() {
@@ -190,7 +190,7 @@ function applyRequestFilters() {
 }
 function renderWorkflows() {
   const rows = state.workflows;
-  return `<div class="page-grid"><section class="card table-card"><div class="table-toolbar"><div><h2>Workflow runs</h2><span class="table-meta">${rows.length} recent</span></div><button class="link-button" data-action="new-workflow">Start from template →</button></div><div class="table-scroll"><table><thead><tr><th>RUN ID</th><th>WORKFLOW</th><th>VERSION</th><th>STATUS</th><th>STEPS</th><th>UPDATED</th></tr></thead><tbody>${rows.length ? rows.map(w => `<tr data-click="workflow" data-id="${esc(w.id)}"><td class="id-cell">${esc(w.id.slice(0, 8))}…</td><td>${esc(w.name)}</td><td><span class="detail-value">v${esc(w.version)}</span></td><td>${statusPill(w.status)}</td><td>${fmtNum(w.steps)}</td><td>${esc(ago(w.updatedAt))}</td></tr>`).join('') : '<tr><td colspan="6" class="empty-row">No workflow runs yet. Start the draft, validate, and publish workflow.</td></tr>'}</tbody></table></div></section>
+  return `<div class="page-grid"><section class="card table-card"><div class="table-toolbar"><div><h2>Workflow runs</h2><span class="table-meta">${rows.length} recent</span></div><button class="link-button" data-action="new-workflow">Start from template →</button></div><div class="table-scroll" tabindex="0" role="region" aria-label="Results table"><table><thead><tr><th>RUN ID</th><th>WORKFLOW</th><th>VERSION</th><th>STATUS</th><th>STEPS</th><th>UPDATED</th></tr></thead><tbody>${rows.length ? rows.map(w => `<tr data-click="workflow" data-id="${esc(w.id)}"><td class="id-cell">${esc(w.id.slice(0, 8))}…</td><td>${esc(w.name)}</td><td><span class="detail-value">v${esc(w.version)}</span></td><td>${statusPill(w.status)}</td><td>${fmtNum(w.steps)}</td><td>${esc(ago(w.updatedAt))}</td></tr>`).join('') : '<tr><td colspan="6" class="empty-row">No workflow runs yet. Start the draft, validate, and publish workflow.</td></tr>'}</tbody></table></div></section>
     <aside class="card workflow-template"><h3 class="card-title">Available template</h3><p class="card-subtitle">DRAFT, VALIDATE, APPROVE, PUBLISH</p><div class="workflow-flow"><span class="flow-node"><span>✳</span>Draft</span><span class="flow-arrow">→</span><span class="flow-node"><span>✓</span>Validate</span><span class="flow-arrow">↺</span><span class="flow-node"><span>◎</span>Review</span><span class="flow-arrow">→</span><span class="flow-node"><span>↗</span>Save</span></div><div class="workflow-note">Version 1.0.0 · step limit ${fmtNum(state.workflows?.[0]?.graph?.max_steps || 8)} · SQLite checkpoints · approval gate required before the permitted preview tool.</div><button class="btn primary small" style="margin-top:13px;width:100%" data-action="new-workflow">Start workflow</button></aside></div>`;
 }
 function renderApprovals() {
@@ -233,7 +233,7 @@ async function watchRequest(id) {
   const failure = item?.error ? `<div class="info-banner" style="margin-bottom:13px;border-color:#f0d7d9;color:#a05158;background:#fff7f7">${ICONS.error}<span>${esc(item.error)} · This generation cannot resume. Review the backend and resubmit.</span></div>` : '';
   showModal(`Inference · ${id.slice(0, 8)}`, `${failure}<div class="config-pairs" style="margin-bottom:13px"><div class="config-pair"><small>Model revision</small><strong>${esc(item ? `${item.model}@${item.modelRevision}` : 'Loading…')}</strong></div><div class="config-pair"><small>Status</small><strong id="stream-status">${esc(item?.status || 'connecting')}</strong></div></div><div class="stream-section"><h3>Generated output <span id="stream-token-count">${esc(outputCount)}</span></h3><div class="token-output" id="token-output"><span style="color:#9da7b5">${item?.output ? 'Loading stored stream events…' : 'Waiting for model output…'}</span></div></div><div class="stream-section"><h3>Control events <span>separate from token stream</span></h3><div class="control-events" id="control-events"><div class="control-event"><time>now</time><strong>connecting</strong><span>Opening request event stream</span></div></div></div>`, `<span class="foot-note">${canCancel ? 'Cancellation is cooperative while the backend stream is active.' : 'Generation cannot resume after cancellation or failure.'}</span>${canCancel ? `<button class="btn danger small" data-action="cancel-request" data-id="${esc(id)}">Cancel request</button>` : '<button class="btn small" data-action="close-modal">Close</button>'}`, true);
   if (state.source) state.source.close();
-  const source = new EventSource(`/api/requests/${encodeURIComponent(id)}/events`);
+  const source = authenticatedEvents(`/api/requests/${encodeURIComponent(id)}/events`);
   state.source = source;
   const output = document.getElementById('token-output');
   const eventLog = document.getElementById('control-events');
@@ -264,7 +264,7 @@ async function watchRequest(id) {
   ['queued', 'running', 'completed', 'failed', 'cancelled', 'token'].forEach(name => source.addEventListener(name, event => pushEvent(name, event)));
   source.onerror = () => {
     if (source.readyState === EventSource.CLOSED) return;
-    if (status && status.textContent === 'connecting') status.textContent = 'reconnecting';
+    if (status) status.textContent = 'Stream disconnected; reopen to retry';
   };
 }
 async function showWorkflow(id) {
@@ -361,3 +361,34 @@ document.addEventListener('keydown', event => {
 
 refresh().then(() => renderPage());
 window.setInterval(refresh, 3000);
+
+// Fetch-based event stream keeps the bearer token out of URLs and persistent storage.
+function authenticatedEvents(url) {
+  const controller = new AbortController();
+  const source = new EventTarget();
+  source.readyState = 0;
+  source.close = () => { source.readyState = 2; controller.abort(); };
+  (async () => {
+    try {
+      const response = await fetch(url, {signal: controller.signal, headers: {Authorization: 'Bearer ' + document.getElementById('operator-token').value}});
+      if (!response.ok) throw new Error('Stream access denied');
+      source.readyState = 1;
+      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
+      while (source.readyState !== 2) {
+        const {value, done} = await reader.read(); if (done) break;
+        buffer += decoder.decode(value, {stream: true}).replace(/\r\n/g, '\n');
+        let end;
+        while ((end = buffer.indexOf('\n\n')) !== -1) {
+          const frame = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+          const lines = frame.split('\n');
+          const type = lines.find(line => line.startsWith('event:'))?.slice(6).trim() || 'message';
+          const data = lines.filter(line => line.startsWith('data:')).map(line => line.slice(5).trimStart()).join('\n');
+          source.dispatchEvent(new MessageEvent(type, {data}));
+        }
+      }
+      source.close();
+    } catch (error) { if (!controller.signal.aborted) source.onerror?.(error); source.close(); }
+  })();
+  return source;
+}
+document.getElementById('operator-connect').addEventListener('click', refresh);

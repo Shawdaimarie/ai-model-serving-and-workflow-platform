@@ -8,6 +8,7 @@ an authenticated API gateway and use a separately managed database/queue.
 from __future__ import annotations
 
 import json
+import secrets
 import os
 import re
 import sqlite3
@@ -38,6 +39,12 @@ MAX_ACTIVE = int(os.environ.get("MAX_ACTIVE_REQUESTS", "8"))
 MAX_QUEUE = int(os.environ.get("MAX_QUEUED_REQUESTS", "100"))
 MAX_TENANT_ACTIVE = int(os.environ.get("MAX_TENANT_ACTIVE", "4"))
 MAX_WORKFLOW_STEPS = 8
+API_TOKEN = os.environ.get("PLATFORM_API_TOKEN", "")
+if API_TOKEN and len(API_TOKEN) < 32:
+    raise ValueError("PLATFORM_API_TOKEN must contain at least 32 characters")
+if HOST not in {"127.0.0.1", "localhost", "::1"} and not API_TOKEN:
+    raise ValueError("A PLATFORM_API_TOKEN is required for non-loopback binding")
+
 
 DB_LOCK = threading.RLock()
 SCHEDULER_WAKE = threading.Event()
@@ -570,15 +577,42 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def authorized(self) -> bool:
+        # Local demo remains available; a configured token protects every API route.
+        origin = self.headers.get("Origin")
+        if origin and origin not in {f"http://{self.headers.get('Host')}", f"https://{self.headers.get('Host')}"}:
+            self.close_connection = True
+            self.send_json({"error": "Cross-origin requests are not allowed"}, 403)
+            return False
+        if API_TOKEN and not secrets.compare_digest(self.headers.get("Authorization", ""), "Bearer " + API_TOKEN):
+            self.close_connection = True
+            self.send_json({"error": "Valid operator bearer token required"}, 401)
+            return False
+        return True
+
     def body_json(self) -> dict[str, Any]:
-        length = min(int(self.headers.get("Content-Length", "0")), 1_000_000)
-        data = json.loads(self.rfile.read(length) or b"{}")
+        self.connection.settimeout(5)
+        lengths = self.headers.get_all("Content-Length", [])
+        if self.headers.get("Transfer-Encoding") or len(lengths) != 1 or not re.fullmatch(r"[0-9]+", lengths[0]):
+            self.close_connection = True
+            raise ValueError("A single nonnegative Content-Length is required")
+        length = int(lengths[0])
+        if length > 1_000_000:
+            self.close_connection = True
+            raise ValueError("Request body exceeds 1,000,000 bytes")
+        raw = self.rfile.read(length)
+        if len(raw) != length:
+            self.close_connection = True
+            raise ValueError("Incomplete request body")
+        data = json.loads(raw or b"{}")
         if not isinstance(data, dict):
             raise ValueError("Request body must be a JSON object")
         return data
 
     def do_GET(self) -> None:
         path = self.path.split("?", 1)[0]
+        if path.startswith("/api/") and not self.authorized():
+            return
         try:
             if path == "/" or path == "/index.html":
                 return self.send_file("index.html", "text/html; charset=utf-8")
@@ -637,6 +671,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = self.path.split("?", 1)[0]
+        if path.startswith("/api/") and not self.authorized():
+            return
         try:
             payload = self.body_json()
             if path == "/api/inference":
@@ -653,7 +689,8 @@ class Handler(BaseHTTPRequestHandler):
             if match:
                 return self.resume_workflow(match.group(1))
             return self.send_json({"error": "Not found"}, 404)
-        except (ValueError, KeyError, json.JSONDecodeError) as exc:
+        except (ValueError, KeyError, json.JSONDecodeError, TimeoutError) as exc:
+            self.close_connection = True
             self.send_json({"error": str(exc)}, 400)
         except Exception as exc:
             self.send_json({"error": str(exc)}, 500)
@@ -738,6 +775,9 @@ class Handler(BaseHTTPRequestHandler):
         state = {"current_node": "draft", "executed_steps": 0, "outputs": {}}
         stamp = now()
         with DB_LOCK, db() as con:
+            unfinished = con.execute("SELECT count(*) FROM workflow_runs WHERE status IN ('running','awaiting_approval')").fetchone()[0]
+            if unfinished >= MAX_QUEUE:
+                return self.send_json({"error": "Workflow capacity reached", "retryable": True}, 429)
             con.execute("INSERT INTO workflow_runs(id,name,version,status,input_json,graph_json,state_json,config_json,created_at,updated_at) VALUES(?,?,?,'running',?,?,?,?,?,?)",
                         (run_id, WORKFLOW_GRAPH["name"], WORKFLOW_GRAPH["version"], json.dumps({"prompt": prompt.strip()}),
                          json.dumps(WORKFLOW_GRAPH), json.dumps(state), json.dumps(config), stamp, stamp))
